@@ -30,8 +30,6 @@ public class UserController {
     @Autowired
     private JwtService jwtService;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
 
     @GetMapping("/welcome")
     public String welcome() {
@@ -46,9 +44,8 @@ public class UserController {
 
     @PostMapping("/login")
     public String loginExistingUser(@RequestBody LoginInfo loginInfo) {
-        UserInfoService userInfoService = new UserInfoService();
         try {
-            UserDetails userDetails = userInfoService.loadUserByUsername(loginInfo.getName());
+            UserInfo userDetails = service.loadUserByUsername2(loginInfo.getName());
             return "Welcome back " + userDetails.getUsername();
             // logic to display news here
         } catch (UsernameNotFoundException e) {
@@ -58,33 +55,29 @@ public class UserController {
 
     @GetMapping("/preferences")
     public String getUserPreferences(@RequestParam String userName) {
-        UserInfoService userInfoService = new UserInfoService();
-        return userInfoService.getPreferenceByUsername(userName);
+        return service.getPreferenceByUsername(userName);
     }
 
     @PutMapping("/preferences")
     public String setUSerPreferences(@RequestParam String userName, @RequestParam String preference) {
-        UserInfoService userInfoService = new UserInfoService();
-        return userInfoService.setPreferenceByUsername(userName, preference);
+        return service.setPreferenceByUsername(userName, preference);
     }
 
     @GetMapping("/news")
-       public ResponseEntity<String> getPreferredNews(@RequestParam String userName) {
-           UserInfoService userInfoService = new UserInfoService();
-               String preferredString = userInfoService.getPreferenceByUsernameForNews(userName);
-               ResponseEntity<String> result = new ResponseEntity<>(null);
+       public String getPreferredNews(@RequestParam String userName) {
+               String preferredString = service.getPreferenceByUsernameForNews(userName);
                if(preferredString.contains("USER DOES NOT EXIST")){
-                return result;
+                return "USER DOES NOT EXIST";
                }
                else{
                 if(preferredString.isBlank()){
                     preferredString="general";
                 }
                RestClient restClient = RestClient.create();
-               result = restClient.get() 
+               String result = restClient.get() 
                .uri("https://api.thenewsapi.com/v1/news/all?api_token=H0u6y7Dkqda8qFrBcALho7u4ZpJs4S7bMuTkwRL5&language=en&limit=3&categories="+preferredString) 
                   .retrieve()
-                .toEntity(String.class); 
+                .toEntity(String.class).toString(); 
                 return result;
           }
         
